@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Workout Planner</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Serene Fitness -->
+    <!-- Application Structure Plan: The application is designed as a single-page dashboard to provide a seamless and focused user experience. The structure is thematic, starting with a high-level schedule choice, then drilling down into specific workout details via an interactive tab system. This is more intuitive than a linear document, allowing users to quickly access the information they need for a given day. A key interaction is the ability to switch between gym and home versions of exercises, directly addressing a core user need. A muscle group focus chart adds a data visualization layer for better workout understanding. This structure was chosen to transform a static plan into a dynamic and motivational tool. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Weekly schedule (2-day vs 3-day). Goal: Inform & Allow Choice. Viz/Method: Interactive buttons. Interaction: Click to select plan, updating the displayed schedule. Justification: Simple, direct interaction for a primary user choice. Library: Vanilla JS.
+        - Report Info: Workout routines (A, B, C). Goal: Organize & Detail. Viz/Method: Tabbed interface. Interaction: Click tabs to switch between workouts. Justification: Organizes a large amount of information cleanly, preventing cognitive overload. Library: Vanilla JS.
+        - Report Info: Muscle groups targeted. Goal: Compare & Inform. Viz/Method: Donut Chart. Interaction: Chart updates when a new workout tab is selected. Justification: Provides a quick visual summary of each workout's focus, aiding in understanding the plan's structure. Library: Chart.js.
+        - Report Info: Gym vs. Home exercises. Goal: Allow Choice & Adaptability. Viz/Method: Toggle switch. Interaction: Toggles all exercises in the visible workout between gym and home versions. Justification: A critical feature for user flexibility, implemented as a simple, universal control. Library: Vanilla JS.
+        - Report Info: Supplement suggestions. Goal: Inform. Viz/Method: Icon-based card layout. Interaction: Static display. Justification: Visually separates this supplementary information, making it easy to digest. Method: HTML/Tailwind with Unicode icons.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 350px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 400px;
+        }
+        .active-tab {
+            border-bottom-color: #4f46e5;
+            color: #4f46e5;
+            font-weight: 600;
+        }
+        .inactive-tab {
+            border-bottom-color: transparent;
+            color: #6b7280;
+        }
+        .plan-btn-active {
+            background-color: #4f46e5;
+            color: white;
+        }
+        .plan-btn-inactive {
+            background-color: #e5e7eb;
+            color: #374151;
+        }
+        .gemini-btn {
+            background-color: #6366f1;
+            color: white;
+            transition: background-color 0.3s;
+        }
+        .gemini-btn:hover {
+            background-color: #4f46e5;
+        }
+        .loader {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #4f46e5;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+        
+        <header class="text-center mb-10">
+            <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900">Your AI-Powered Workout Planner</h1>
+            <p class="mt-2 text-base sm:text-lg text-gray-600">Enhanced with AI to give you more exercise options.</p>
+        </header>
+
+        <main>
+            <section id="schedule" class="mb-12 bg-white p-4 sm:p-6 rounded-xl shadow-md">
+                <h2 class="text-xl sm:text-2xl font-bold mb-4 text-center">1. Choose Your Weekly Plan</h2>
+                <div class="flex justify-center space-x-4 mb-6">
+                    <button id="btn-2-day" class="plan-btn-active px-4 py-2 sm:px-6 rounded-lg font-semibold transition-all duration-300">2-Day Plan</button>
+                    <button id="btn-3-day" class="plan-btn-inactive px-4 py-2 sm:px-6 rounded-lg font-semibold transition-all duration-300">3-Day Plan</button>
+                </div>
+                <div id="schedule-display" class="text-center bg-indigo-50 p-4 rounded-lg">
+                    <p class="font-semibold text-indigo-800 text-sm sm:text-base">Example: Workout on <span id="day-1">Monday</span> and <span id="day-2">Thursday</span>.</p>
+                </div>
+            </section>
+
+            <section id="workouts" class="mb-12">
+                 <h2 class="text-xl sm:text-2xl font-bold mb-2 text-center">2. Explore Your Workouts</h2>
+                 <p class="text-center text-gray-600 mb-6 px-2">Select a workout, switch between Gym/Home, and find exercise alternatives with AI ✨.</p>
+                
+                <div class="flex justify-center items-center mb-6 space-x-3">
+                    <span class="font-semibold text-gray-600">Gym</span>
+                    <label for="env-toggle" class="flex items-center cursor-pointer">
+                        <div class="relative">
+                            <input type="checkbox" id="env-toggle" class="sr-only">
+                            <div class="block bg-gray-300 w-14 h-8 rounded-full"></div>
+                            <div class="dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition"></div>
+                        </div>
+                    </label>
+                    <span class="font-semibold text-gray-600">Home</span>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div class="lg:col-span-2 bg-white p-4 sm:p-6 rounded-xl shadow-md">
+                        <div class="border-b border-gray-200 mb-4">
+                            <nav class="-mb-px flex justify-center space-x-4 sm:space-x-8" aria-label="Tabs">
+                                <button id="tab-a" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm active-tab">Workout A</button>
+                                <button id="tab-b" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm inactive-tab">Workout B</button>
+                                <button id="tab-c" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm inactive-tab">Workout C</button>
+                            </nav>
+                        </div>
+                        <div id="workout-content">
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-md flex flex-col justify-center">
+                        <h3 class="text-xl font-bold mb-4 text-center">Muscle Group Focus</h3>
+                        <div class="chart-container">
+                            <canvas id="muscle-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="supplements" class="mb-12 bg-white p-4 sm:p-6 rounded-xl shadow-md">
+                <h2 class="text-xl sm:text-2xl font-bold mb-6 text-center">3. Nutrition & Supplement Guide</h2>
+                <p class="text-center text-gray-600 mb-8 max-w-2xl mx-auto">Supplements can support your goals, but remember to consult with your doctor before starting any new regimen. A healthy diet is always the foundation.</p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 text-center">
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <div class="text-4xl mb-3">🥤</div>
+                        <h3 class="text-xl font-semibold mb-2">Protein Powder</h3>
+                        <p class="text-gray-600">Aids muscle repair and growth. A post-workout shake can be an efficient way to get the protein your muscles need.</p>
+                    </div>
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <div class="text-4xl mb-3">💪</div>
+                        <h3 class="text-xl font-semibold mb-2">Creatine Monohydrate</h3>
+                        <p class="text-gray-600">Increases strength and power output during your workouts. Take 5g daily for best results.</p>
+                    </div>
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <div class="text-4xl mb-3">⚡️</div>
+                        <h3 class="text-xl font-semibold mb-2">Pre-Workout</h3>
+                        <p class="text-gray-600">Provides an energy and focus boost. Start with a half scoop to assess tolerance. A cup of coffee also works!</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+        
+        <footer class="text-center mt-12 py-6 border-t border-gray-200">
+             <p class="text-gray-600">Consistency is your superpower. Keep showing up for yourself!</p>
+        </footer>
+
+    </div>
+
+    <script>
+        const workoutData = {
+            'A': {
+                exercises: [
+                    { id: 'a1', name: 'Lower Body', gym: 'Goblet Squats (Dumbbell)', home: 'Bodyweight Squats', sets: 3, reps: '8-12' },
+                    { id: 'a2', name: 'Upper Body (Push)', gym: 'Dumbbell Bench Press', home: 'Push-ups (on knees if needed)', sets: 3, reps: '8-12' },
+                    { id: 'a3', name: 'Upper Body (Pull)', gym: 'Bent-Over Dumbbell Rows', home: 'Superman Lifts', sets: 3, reps: '8-12' },
+                    { id: 'a4', name: 'Core', gym: 'Plank', home: 'Plank', sets: 3, reps: '30-60s' },
+                    { id: 'a5', name: 'Cardio Finisher', gym: 'Incline Treadmill Walk', home: 'Jumping Jacks', sets: 1, reps: '10-15 min' }
+                ],
+                muscleFocus: [40, 40, 20] // Lower, Upper, Core
+            },
+            'B': {
+                exercises: [
+                    { id: 'b1', name: 'Lower Body', gym: 'Walking Lunges (Dumbbells)', home: 'Bodyweight Alternating Lunges', sets: 3, reps: '10-12 per leg' },
+                    { id: 'b2', name: 'Upper Body (Push)', gym: 'Seated Dumbbell Overhead Press', home: 'Pike Push-ups', sets: 3, reps: '8-12' },
+                    { id: 'b3', name: 'Upper Body (Pull)', gym: 'Lat Pulldown Machine', home: 'Inverted Rows (using a sturdy table)', sets: 3, reps: '8-12' },
+                    { id: 'b4', name: 'Core', gym: 'Russian Twists (with weight)', home: 'Bicycle Crunches', sets: 3, reps: '15-20' },
+                    { id: 'b5', name: 'Cardio Finisher', gym: 'Stationary Bike or Rower', home: 'Burpees', sets: 1, reps: '10-15 min' }
+                ],
+                muscleFocus: [40, 40, 20]
+            },
+            'C': {
+                exercises: [
+                    { id: 'c1', name: 'Lower Body', gym: 'Romanian Deadlifts (Dumbbells)', home: 'Glute Bridges', sets: 3, reps: '8-12' },
+                    { id: 'c2', name: 'Upper Body (Push)', gym: 'Incline Dumbbell Press', home: 'Decline Push-ups (feet on a chair)', sets: 3, reps: '8-12' },
+                    { id: 'c3', name: 'Upper Body (Pull)', gym: 'Seated Cable Row', home: 'Band Pull-Aparts', sets: 3, reps: '8-12' },
+                    { id: 'c4', name: 'Core', gym: 'Hanging Knee Raises', home: 'Lying Leg Raises', sets: 3, reps: '10-15' },
+                    { id: 'c5', name: 'Cardio Finisher', gym: 'Elliptical Machine', home: 'Shadow Boxing', sets: 1, reps: '10-15 min' }
+                ],
+                muscleFocus: [40, 40, 20]
+            }
+        };
+
+        let currentPlan = '2-day';
+        let currentWorkout = 'A';
+        let isHome = false;
+        let muscleChart;
+
+        const btn2Day = document.getElementById('btn-2-day');
+        const btn3Day = document.getElementById('btn-3-day');
+        const scheduleDisplay = {
+            day1: document.getElementById('day-1'),
+            day2: document.getElementById('day-2'),
+        };
+        const workoutContent = document.getElementById('workout-content');
+        const envToggle = document.getElementById('env-toggle');
+        const tabs = {
+            'A': document.getElementById('tab-a'),
+            'B': document.getElementById('tab-b'),
+            'C': document.getElementById('tab-c'),
+        };
+
+        async function callGemini(prompt, buttonElement) {
+            const originalContent = buttonElement.innerHTML;
+            buttonElement.disabled = true;
+            buttonElement.innerHTML = '<div class="loader"></div>';
+
+            // IMPORTANT: Replace with your actual API key
+            const apiKey = "AIzaSyBJ5lskxzRyR4xA8-EPU4GlbJ2fFhCsisU"; 
+            
+            if (apiKey === "YOUR_API_KEY_HERE") {
+                alert("Please replace 'YOUR_API_KEY_HERE' with your actual Gemini API key in the HTML file.");
+                buttonElement.disabled = false;
+                buttonElement.innerHTML = originalContent;
+                return "API Key not set.";
+            }
+
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+            const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!response.ok) {
+                    throw new Error(`API call failed with status: ${response.status}`);
+                }
+                const result = await response.json();
+                if (result.candidates && result.candidates.length > 0 && result.candidates[0].content.parts.length > 0) {
+                    return result.candidates[0].content.parts[0].text.trim();
+                }
+                return "Could not generate a response. Please try again.";
+            } catch (error) {
+                console.error("Gemini API call error:", error);
+                return "An error occurred. Please check the console.";
+            } finally {
+                buttonElement.disabled = false;
+                buttonElement.innerHTML = originalContent;
+            }
+        }
+
+        async function getExerciseAlternative(exerciseName, muscleGroup, environment, buttonElement) {
+            const prompt = `Suggest one alternative exercise for "${exerciseName}" that targets the ${muscleGroup}. The user is doing a ${environment} workout. Provide only the name of the exercise.`;
+            const alternative = await callGemini(prompt, buttonElement);
+            
+            if (alternative === "API Key not set." || alternative === "An error occurred. Please check the console." || alternative === "Could not generate a response. Please try again.") {
+                return;
+            }
+
+            const exerciseId = buttonElement.dataset.exerciseId;
+            const exerciseNameElement = document.getElementById(`exercise-name-${exerciseId}`);
+            if (exerciseNameElement) {
+                const videoLink = `https://www.youtube.com/results?search_query=${encodeURIComponent(alternative)}+form+short`;
+                exerciseNameElement.innerHTML = `
+                    <a href="${videoLink}" target="_blank" title="Watch demonstration" class="text-indigo-600 hover:text-indigo-800">
+                        ${alternative} (AI Suggestion ✨) <span class="text-xs">▶️</span>
+                    </a>
+                `;
+            }
+        }
+
+        function updateScheduleDisplay() {
+            if (currentPlan === '2-day') {
+                scheduleDisplay.day1.textContent = 'Monday';
+                scheduleDisplay.day2.textContent = ' and Thursday';
+                btn2Day.classList.remove('plan-btn-inactive');
+                btn2Day.classList.add('plan-btn-active');
+                btn3Day.classList.remove('plan-btn-active');
+                btn3Day.classList.add('plan-btn-inactive');
+                tabs.C.style.display = 'none';
+                if (currentWorkout === 'C') {
+                    switchTab('A');
+                }
+            } else {
+                scheduleDisplay.day1.textContent = 'Monday, Wednesday,';
+                scheduleDisplay.day2.textContent = ' and Friday';
+                btn3Day.classList.remove('plan-btn-inactive');
+                btn3Day.classList.add('plan-btn-active');
+                btn2Day.classList.remove('plan-btn-active');
+                btn2Day.classList.add('plan-btn-inactive');
+                tabs.C.style.display = 'inline-block';
+            }
+        }
+
+        function renderWorkout() {
+            const workout = workoutData[currentWorkout];
+            const environment = isHome ? 'home' : 'gym';
+            
+            let html = '<div class="space-y-4">';
+            workout.exercises.forEach(ex => {
+                const videoLink = `https://www.youtube.com/results?search_query=${encodeURIComponent(ex[environment])}+form+short`;
+                html += `
+                    <div class="flex flex-wrap sm:grid sm:grid-cols-12 gap-2 items-center border-b border-gray-100 pb-3">
+                        <div class="w-full sm:w-auto sm:col-span-3 font-semibold text-gray-700">${ex.name}</div>
+                        <div class="w-3/4 sm:w-auto sm:col-span-7">
+                            <p id="exercise-name-${ex.id}" class="font-semibold">
+                                <a id="exercise-link-${ex.id}" href="${videoLink}" target="_blank" title="Watch demonstration" class="text-indigo-600 hover:text-indigo-800">
+                                    ${ex[environment]} <span class="text-xs">▶️</span>
+                                </a>
+                            </p>
+                            <p class="text-sm text-gray-500">${ex.sets} sets x ${ex.reps} reps</p>
+                        </div>
+                        <div class="w-1/4 sm:w-auto sm:col-span-2 text-right">
+                            <button class="gemini-btn p-2 rounded-full text-xs" data-exercise-id="${ex.id}" data-exercise-name="${ex[environment]}" data-muscle-group="${ex.name}" title="Get AI Alternative">✨</button>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            workoutContent.innerHTML = html;
+            addExerciseButtonListeners();
+            updateChart();
+        }
+
+        function addExerciseButtonListeners() {
+            document.querySelectorAll('[data-exercise-id]').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const targetButton = e.currentTarget;
+                    const exerciseName = targetButton.dataset.exerciseName;
+                    const muscleGroup = targetButton.dataset.muscleGroup;
+                    const environment = isHome ? 'home' : 'gym';
+                    getExerciseAlternative(exerciseName, muscleGroup, environment, targetButton);
+                });
+            });
+        }
+
+        function switchTab(workoutId) {
+            currentWorkout = workoutId;
+            Object.keys(tabs).forEach(id => {
+                tabs[id].classList.remove('active-tab');
+                tabs[id].classList.add('inactive-tab');
+            });
+            tabs[workoutId].classList.add('active-tab');
+            tabs[workoutId].classList.remove('inactive-tab');
+            renderWorkout();
+        }
+
+        function setupEventListeners() {
+            btn2Day.addEventListener('click', () => {
+                currentPlan = '2-day';
+                updateScheduleDisplay();
+            });
+
+            btn3Day.addEventListener('click', () => {
+                currentPlan = '3-day';
+                updateScheduleDisplay();
+            });
+
+            Object.keys(tabs).forEach(id => {
+                tabs[id].addEventListener('click', () => switchTab(id));
+            });
+            
+            envToggle.addEventListener('change', (e) => {
+                isHome = e.target.checked;
+                const dot = document.querySelector('.dot');
+                if (isHome) {
+                    dot.style.transform = 'translateX(100%)';
+                } else {
+                    dot.style.transform = 'translateX(0)';
+                }
+                renderWorkout();
+            });
+        }
+        
+        function createChart() {
+            const ctx = document.getElementById('muscle-chart').getContext('2d');
+            muscleChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Lower Body', 'Upper Body', 'Core & Cardio'],
+                    datasets: [{
+                        data: workoutData[currentWorkout].muscleFocus,
+                        backgroundColor: [
+                            'rgba(79, 70, 229, 0.7)',
+                            'rgba(99, 102, 241, 0.7)',
+                            'rgba(165, 180, 252, 0.7)'
+                        ],
+                        borderColor: [
+                            '#4f46e5',
+                            '#6366f1',
+                            '#a5b4fc'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed !== null) {
+                                        label += context.parsed + '%';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateChart() {
+            if (!muscleChart) return;
+            muscleChart.data.datasets[0].data = workoutData[currentWorkout].muscleFocus;
+            muscleChart.update();
+        }
+
+        function init() {
+            updateScheduleDisplay();
+            createChart();
+            renderWorkout();
+            setupEventListeners();
+        }
+
+        window.onload = init;
+    </script>
+
+</body>
+</html>
