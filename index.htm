@@ -27,8 +27,8 @@
             max-width: 350px;
             margin-left: auto;
             margin-right: auto;
-            height: 350px;
-            max-height: 400px;
+            height: 250px;
+            max-height: 250px;
         }
         .active-tab {
             border-bottom-color: #4f46e5;
@@ -67,6 +67,22 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #4f46e5;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+        input[type=range]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #4f46e5;
+            cursor: pointer;
+            border-radius: 50%;
+        }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800">
@@ -82,8 +98,8 @@
             <section id="schedule" class="mb-12 bg-white p-4 sm:p-6 rounded-xl shadow-md">
                 <h2 class="text-xl sm:text-2xl font-bold mb-4 text-center">1. Choose Your Weekly Plan</h2>
                 <div class="flex justify-center space-x-4 mb-6">
-                    <button id="btn-2-day" class="plan-btn-active px-4 py-2 sm:px-6 rounded-lg font-semibold transition-all duration-300">2-Day Plan</button>
-                    <button id="btn-3-day" class="plan-btn-inactive px-4 py-2 sm:px-6 rounded-lg font-semibold transition-all duration-300">3-Day Plan</button>
+                    <button id="btn-2-day" class="plan-btn-inactive px-4 py-2 sm:px-6 rounded-lg font-semibold transition-all duration-300">2-Day Plan</button>
+                    <button id="btn-3-day" class="plan-btn-active px-4 py-2 sm:px-6 rounded-lg font-semibold transition-all duration-300">3-Day Plan</button>
                 </div>
                 <div id="schedule-display" class="text-center bg-indigo-50 p-4 rounded-lg">
                     <p class="font-semibold text-indigo-800 text-sm sm:text-base">Example: Workout on <span id="day-1">Monday</span> and <span id="day-2">Thursday</span>.</p>
@@ -92,36 +108,53 @@
 
             <section id="workouts" class="mb-12">
                  <h2 class="text-xl sm:text-2xl font-bold mb-2 text-center">2. Explore Your Workouts</h2>
-                 <p class="text-center text-gray-600 mb-6 px-2">Select a workout, switch between Gym/Home, and find exercise alternatives with AI ✨.</p>
+                 <p class="text-center text-gray-600 mb-6 px-2">Customize your muscle focus, then select a workout below.</p>
                 
-                <div class="flex justify-center items-center mb-6 space-x-3">
-                    <span class="font-semibold text-gray-600">Gym</span>
-                    <label for="env-toggle" class="flex items-center cursor-pointer">
-                        <div class="relative">
-                            <input type="checkbox" id="env-toggle" class="sr-only">
-                            <div class="block bg-gray-300 w-14 h-8 rounded-full"></div>
-                            <div class="dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition"></div>
-                        </div>
-                    </label>
-                    <span class="font-semibold text-gray-600">Home</span>
-                </div>
-
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div class="bg-white p-6 rounded-xl shadow-md flex flex-col">
+                        <h3 class="text-xl font-bold mb-4 text-center">Muscle Group Focus</h3>
+                        <div class="chart-container mb-6">
+                            <canvas id="muscle-chart"></canvas>
+                        </div>
+                        <div id="configurator" class="space-y-4">
+                            <div>
+                                <label for="lower-body-slider" class="flex justify-between font-semibold text-sm"><span>Lower Body</span><span id="lower-body-value">40%</span></label>
+                                <input type="range" id="lower-body-slider" min="0" max="100" value="40" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                            </div>
+                            <div>
+                                <label for="upper-body-slider" class="flex justify-between font-semibold text-sm"><span>Upper Body</span><span id="upper-body-value">40%</span></label>
+                                <input type="range" id="upper-body-slider" min="0" max="100" value="40" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                            </div>
+                            <div>
+                                <label for="core-cardio-slider" class="flex justify-between font-semibold text-sm"><span>Core & Cardio</span><span id="core-cardio-value">20%</span></label>
+                                <input type="range" id="core-cardio-slider" min="0" max="100" value="20" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                            </div>
+                            <div class="flex justify-center space-x-4 pt-2">
+                                <button id="generate-plan-btn" class="gemini-btn px-4 py-2 rounded-lg font-semibold">Generate New Plan</button>
+                                <button id="reset-plan-btn" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-semibold">Reset</button>
+                            </div>
+                        </div>
+                    </div>
                     <div class="lg:col-span-2 bg-white p-4 sm:p-6 rounded-xl shadow-md">
-                        <div class="border-b border-gray-200 mb-4">
-                            <nav class="-mb-px flex justify-center space-x-4 sm:space-x-8" aria-label="Tabs">
+                        <div class="flex justify-between items-center border-b border-gray-200 mb-4">
+                            <div class="flex items-center space-x-2">
+                                <span class="font-semibold text-gray-600 text-sm hidden sm:inline">Gym</span>
+                                <label for="env-toggle" class="flex items-center cursor-pointer">
+                                    <div class="relative">
+                                        <input type="checkbox" id="env-toggle" class="sr-only">
+                                        <div class="block bg-gray-300 w-14 h-8 rounded-full"></div>
+                                        <div class="dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition"></div>
+                                    </div>
+                                </label>
+                                <span class="font-semibold text-gray-600 text-sm hidden sm:inline">Home</span>
+                            </div>
+                            <nav class="-mb-px flex space-x-4 sm:space-x-8" aria-label="Tabs">
                                 <button id="tab-a" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm active-tab">Workout A</button>
                                 <button id="tab-b" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm inactive-tab">Workout B</button>
                                 <button id="tab-c" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm inactive-tab">Workout C</button>
                             </nav>
                         </div>
                         <div id="workout-content">
-                        </div>
-                    </div>
-                    <div class="bg-white p-6 rounded-xl shadow-md flex flex-col justify-center">
-                        <h3 class="text-xl font-bold mb-4 text-center">Muscle Group Focus</h3>
-                        <div class="chart-container">
-                            <canvas id="muscle-chart"></canvas>
                         </div>
                     </div>
                 </div>
@@ -133,17 +166,23 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 text-center">
                     <div class="bg-gray-50 p-6 rounded-lg">
                         <div class="text-4xl mb-3">🥤</div>
-                        <h3 class="text-xl font-semibold mb-2">Protein Powder</h3>
+                        <a href="https://www.amazon.com.au/s?k=whey+protein" target="_blank" class="text-gray-800 hover:text-indigo-600 transition-colors">
+                            <h3 class="text-xl font-semibold mb-2">Protein Powder</h3>
+                        </a>
                         <p class="text-gray-600">Aids muscle repair and growth. A post-workout shake can be an efficient way to get the protein your muscles need.</p>
                     </div>
                     <div class="bg-gray-50 p-6 rounded-lg">
                         <div class="text-4xl mb-3">💪</div>
-                        <h3 class="text-xl font-semibold mb-2">Creatine Monohydrate</h3>
+                        <a href="https://www.amazon.com.au/s?k=creatine+monohydrate" target="_blank" class="text-gray-800 hover:text-indigo-600 transition-colors">
+                            <h3 class="text-xl font-semibold mb-2">Creatine Monohydrate</h3>
+                        </a>
                         <p class="text-gray-600">Increases strength and power output during your workouts. Take 5g daily for best results.</p>
                     </div>
                     <div class="bg-gray-50 p-6 rounded-lg">
                         <div class="text-4xl mb-3">⚡️</div>
-                        <h3 class="text-xl font-semibold mb-2">Pre-Workout</h3>
+                        <a href="https://www.amazon.com.au/s?k=pre+workout" target="_blank" class="text-gray-800 hover:text-indigo-600 transition-colors">
+                            <h3 class="text-xl font-semibold mb-2">Pre-Workout</h3>
+                        </a>
                         <p class="text-gray-600">Provides an energy and focus boost. Start with a half scoop to assess tolerance. A cup of coffee also works!</p>
                     </div>
                 </div>
@@ -157,40 +196,41 @@
     </div>
 
     <script>
-        const workoutData = {
+        const originalWorkoutData = {
             'A': {
                 exercises: [
-                    { id: 'a1', name: 'Lower Body', gym: 'Goblet Squats (Dumbbell)', home: 'Bodyweight Squats', sets: 3, reps: '8-12' },
-                    { id: 'a2', name: 'Upper Body (Push)', gym: 'Dumbbell Bench Press', home: 'Push-ups (on knees if needed)', sets: 3, reps: '8-12' },
-                    { id: 'a3', name: 'Upper Body (Pull)', gym: 'Bent-Over Dumbbell Rows', home: 'Superman Lifts', sets: 3, reps: '8-12' },
-                    { id: 'a4', name: 'Core', gym: 'Plank', home: 'Plank', sets: 3, reps: '30-60s' },
-                    { id: 'a5', name: 'Cardio Finisher', gym: 'Incline Treadmill Walk', home: 'Jumping Jacks', sets: 1, reps: '10-15 min' }
+                    { id: 'a1', name: 'Lower Body', gym: 'Goblet Squats (Dumbbell)', home: 'Bodyweight Squats', sets: "3", reps: '8-12' },
+                    { id: 'a2', name: 'Upper Body (Push)', gym: 'Dumbbell Bench Press', home: 'Push-ups (on knees if needed)', sets: "3", reps: '8-12' },
+                    { id: 'a3', name: 'Upper Body (Pull)', gym: 'Bent-Over Dumbbell Rows', home: 'Superman Lifts', sets: "3", reps: '8-12' },
+                    { id: 'a4', name: 'Core', gym: 'Plank', home: 'Plank', sets: "3", reps: '30-60s' },
+                    { id: 'a5', name: 'Cardio Finisher', gym: 'Incline Treadmill Walk', home: 'Jumping Jacks', sets: "1", reps: '10-15 min' }
                 ],
-                muscleFocus: [40, 40, 20] // Lower, Upper, Core
+                muscleFocus: [40, 40, 20]
             },
             'B': {
                 exercises: [
-                    { id: 'b1', name: 'Lower Body', gym: 'Walking Lunges (Dumbbells)', home: 'Bodyweight Alternating Lunges', sets: 3, reps: '10-12 per leg' },
-                    { id: 'b2', name: 'Upper Body (Push)', gym: 'Seated Dumbbell Overhead Press', home: 'Pike Push-ups', sets: 3, reps: '8-12' },
-                    { id: 'b3', name: 'Upper Body (Pull)', gym: 'Lat Pulldown Machine', home: 'Inverted Rows (using a sturdy table)', sets: 3, reps: '8-12' },
-                    { id: 'b4', name: 'Core', gym: 'Russian Twists (with weight)', home: 'Bicycle Crunches', sets: 3, reps: '15-20' },
-                    { id: 'b5', name: 'Cardio Finisher', gym: 'Stationary Bike or Rower', home: 'Burpees', sets: 1, reps: '10-15 min' }
+                    { id: 'b1', name: 'Lower Body', gym: 'Walking Lunges (Dumbbells)', home: 'Bodyweight Alternating Lunges', sets: "3", reps: '10-12 per leg' },
+                    { id: 'b2', name: 'Upper Body (Push)', gym: 'Seated Dumbbell Overhead Press', home: 'Pike Push-ups', sets: "3", reps: '8-12' },
+                    { id: 'b3', name: 'Upper Body (Pull)', gym: 'Lat Pulldown Machine', home: 'Inverted Rows (using a sturdy table)', sets: "3", reps: '8-12' },
+                    { id: 'b4', name: 'Core', gym: 'Russian Twists (with weight)', home: 'Bicycle Crunches', sets: "3", reps: '15-20' },
+                    { id: 'b5', name: 'Cardio Finisher', gym: 'Stationary Bike or Rower', home: 'Burpees', sets: "1", reps: '10-15 min' }
                 ],
                 muscleFocus: [40, 40, 20]
             },
             'C': {
                 exercises: [
-                    { id: 'c1', name: 'Lower Body', gym: 'Romanian Deadlifts (Dumbbells)', home: 'Glute Bridges', sets: 3, reps: '8-12' },
-                    { id: 'c2', name: 'Upper Body (Push)', gym: 'Incline Dumbbell Press', home: 'Decline Push-ups (feet on a chair)', sets: 3, reps: '8-12' },
-                    { id: 'c3', name: 'Upper Body (Pull)', gym: 'Seated Cable Row', home: 'Band Pull-Aparts', sets: 3, reps: '8-12' },
-                    { id: 'c4', name: 'Core', gym: 'Hanging Knee Raises', home: 'Lying Leg Raises', sets: 3, reps: '10-15' },
-                    { id: 'c5', name: 'Cardio Finisher', gym: 'Elliptical Machine', home: 'Shadow Boxing', sets: 1, reps: '10-15 min' }
+                    { id: 'c1', name: 'Lower Body', gym: 'Romanian Deadlifts (Dumbbells)', home: 'Glute Bridges', sets: "3", reps: '8-12' },
+                    { id: 'c2', name: 'Upper Body (Push)', gym: 'Incline Dumbbell Press', home: 'Decline Push-ups (feet on a chair)', sets: "3", reps: '8-12' },
+                    { id: 'c3', name: 'Upper Body (Pull)', gym: 'Seated Cable Row', home: 'Band Pull-Aparts', sets: "3", reps: '8-12' },
+                    { id: 'c4', name: 'Core', gym: 'Hanging Knee Raises', home: 'Lying Leg Raises', sets: "3", reps: '10-15' },
+                    { id: 'c5', name: 'Cardio Finisher', gym: 'Elliptical Machine', home: 'Shadow Boxing', sets: "1", reps: '10-15 min' }
                 ],
                 muscleFocus: [40, 40, 20]
             }
         };
 
-        let currentPlan = '2-day';
+        let workoutData = JSON.parse(JSON.stringify(originalWorkoutData));
+        let currentPlan = '3-day';
         let currentWorkout = 'A';
         let isHome = false;
         let muscleChart;
@@ -203,19 +243,27 @@
         };
         const workoutContent = document.getElementById('workout-content');
         const envToggle = document.getElementById('env-toggle');
-        const tabs = {
-            'A': document.getElementById('tab-a'),
-            'B': document.getElementById('tab-b'),
-            'C': document.getElementById('tab-c'),
+        const tabs = { 'A': document.getElementById('tab-a'), 'B': document.getElementById('tab-b'), 'C': document.getElementById('tab-c') };
+        
+        const sliders = {
+            lower: document.getElementById('lower-body-slider'),
+            upper: document.getElementById('upper-body-slider'),
+            core: document.getElementById('core-cardio-slider'),
         };
+        const values = {
+            lower: document.getElementById('lower-body-value'),
+            upper: document.getElementById('upper-body-value'),
+            core: document.getElementById('core-cardio-value'),
+        };
+        const generatePlanBtn = document.getElementById('generate-plan-btn');
+        const resetPlanBtn = document.getElementById('reset-plan-btn');
 
-        async function callGemini(prompt, buttonElement) {
+        async function callGemini(prompt, buttonElement, useJson = false) {
             const originalContent = buttonElement.innerHTML;
             buttonElement.disabled = true;
             buttonElement.innerHTML = '<div class="loader"></div>';
 
-            // IMPORTANT: Replace with your actual API key
-            const apiKey = "AIzaSyBJ5lskxzRyR4xA8-EPU4GlbJ2fFhCsisU"; 
+            const apiKey = "AIzaSyBJ5lskxzRyR4xA8-EPU4GlbJ2fFhCsisU";
             
             if (apiKey === "YOUR_API_KEY_HERE") {
                 alert("Please replace 'YOUR_API_KEY_HERE' with your actual Gemini API key in the HTML file.");
@@ -227,23 +275,40 @@
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
             const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
 
+            if (useJson) {
+                payload.generationConfig = {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "ARRAY",
+                        items: {
+                            type: "OBJECT",
+                            properties: {
+                                name: { type: "STRING" },
+                                exerciseName: { type: "STRING" },
+                                sets: { type: "STRING" },
+                                reps: { type: "STRING" }
+                            },
+                            required: ["name", "exerciseName", "sets", "reps"]
+                        }
+                    }
+                };
+            }
+
             try {
                 const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
-                if (!response.ok) {
-                    throw new Error(`API call failed with status: ${response.status}`);
-                }
+                if (!response.ok) throw new Error(`API call failed with status: ${response.status}`);
                 const result = await response.json();
                 if (result.candidates && result.candidates.length > 0 && result.candidates[0].content.parts.length > 0) {
                     return result.candidates[0].content.parts[0].text.trim();
                 }
-                return "Could not generate a response. Please try again.";
+                return null;
             } catch (error) {
                 console.error("Gemini API call error:", error);
-                return "An error occurred. Please check the console.";
+                return null;
             } finally {
                 buttonElement.disabled = false;
                 buttonElement.innerHTML = originalContent;
@@ -251,22 +316,46 @@
         }
 
         async function getExerciseAlternative(exerciseName, muscleGroup, environment, buttonElement) {
-            const prompt = `Suggest one alternative exercise for "${exerciseName}" that targets the ${muscleGroup}. The user is doing a ${environment} workout. Provide only the name of the exercise.`;
+            const prompt = `Suggest one alternative exercise for "${exerciseName}" that targets the ${muscleGroup}. The user is in a ${environment} setting. Provide only the name of the exercise.`;
             const alternative = await callGemini(prompt, buttonElement);
-            
-            if (alternative === "API Key not set." || alternative === "An error occurred. Please check the console." || alternative === "Could not generate a response. Please try again.") {
-                return;
-            }
+            if (!alternative || alternative === "API Key not set.") return;
 
             const exerciseId = buttonElement.dataset.exerciseId;
             const exerciseNameElement = document.getElementById(`exercise-name-${exerciseId}`);
             if (exerciseNameElement) {
                 const videoLink = `https://www.youtube.com/results?search_query=${encodeURIComponent(alternative)}+form+short`;
-                exerciseNameElement.innerHTML = `
-                    <a href="${videoLink}" target="_blank" title="Watch demonstration" class="text-indigo-600 hover:text-indigo-800">
-                        ${alternative} (AI Suggestion ✨) <span class="text-xs">▶️</span>
-                    </a>
-                `;
+                exerciseNameElement.innerHTML = `<a href="${videoLink}" target="_blank" title="Watch demonstration" class="text-indigo-600 hover:text-indigo-800">${alternative} (AI) <span class="text-xs">▶️</span></a>`;
+            }
+        }
+
+        async function generateCustomWorkout() {
+            const lower = sliders.lower.value;
+            const upper = sliders.upper.value;
+            const core = sliders.core.value;
+            const environment = isHome ? 'home' : 'gym';
+            const prompt = `You are a fitness planner. Create a custom full-body workout for 'Workout ${currentWorkout}'. The desired focus is ${lower}% Lower Body, ${upper}% Upper Body, and ${core}% Core & Cardio. The user is in a ${environment} setting. Provide a list of exactly 5 exercises: one for 'Lower Body', 'Upper Body (Push)', 'Upper Body (Pull)', 'Core', and 'Cardio Finisher'. Suggest sets and reps for each. Respond ONLY with a JSON array of objects, following the specified schema.`;
+            
+            const result = await callGemini(prompt, generatePlanBtn, true);
+            if (result) {
+                try {
+                    const newExercises = JSON.parse(result);
+                    const newWorkout = {
+                        exercises: newExercises.map((ex, index) => ({
+                            ...ex,
+                            id: `${currentWorkout.toLowerCase()}${index + 1}`,
+                            gym: ex.exerciseName,
+                            home: ex.exerciseName,
+                        })),
+                        muscleFocus: [parseInt(lower), parseInt(upper), parseInt(core)]
+                    };
+                    workoutData[currentWorkout] = newWorkout;
+                    renderWorkout();
+                } catch (e) {
+                    console.error("Failed to parse JSON from Gemini:", e);
+                    alert("There was an error generating the new workout plan. Please try again.");
+                }
+            } else {
+                 alert("There was an error generating the new workout plan. Please try again.");
             }
         }
 
@@ -279,9 +368,7 @@
                 btn3Day.classList.remove('plan-btn-active');
                 btn3Day.classList.add('plan-btn-inactive');
                 tabs.C.style.display = 'none';
-                if (currentWorkout === 'C') {
-                    switchTab('A');
-                }
+                if (currentWorkout === 'C') switchTab('A');
             } else {
                 scheduleDisplay.day1.textContent = 'Monday, Wednesday,';
                 scheduleDisplay.day2.textContent = ' and Friday';
@@ -299,20 +386,23 @@
             
             let html = '<div class="space-y-4">';
             workout.exercises.forEach(ex => {
-                const videoLink = `https://www.youtube.com/results?search_query=${encodeURIComponent(ex[environment])}+form+short`;
+                const exerciseName = ex[environment] || ex.exerciseName;
+                const videoLink = `https://www.youtube.com/results?search_query=${encodeURIComponent(exerciseName)}+form+short`;
                 html += `
-                    <div class="flex flex-wrap sm:grid sm:grid-cols-12 gap-2 items-center border-b border-gray-100 pb-3">
-                        <div class="w-full sm:w-auto sm:col-span-3 font-semibold text-gray-700">${ex.name}</div>
-                        <div class="w-3/4 sm:w-auto sm:col-span-7">
-                            <p id="exercise-name-${ex.id}" class="font-semibold">
-                                <a id="exercise-link-${ex.id}" href="${videoLink}" target="_blank" title="Watch demonstration" class="text-indigo-600 hover:text-indigo-800">
-                                    ${ex[environment]} <span class="text-xs">▶️</span>
-                                </a>
-                            </p>
-                            <p class="text-sm text-gray-500">${ex.sets} sets x ${ex.reps} reps</p>
-                        </div>
-                        <div class="w-1/4 sm:w-auto sm:col-span-2 text-right">
-                            <button class="gemini-btn p-2 rounded-full text-xs" data-exercise-id="${ex.id}" data-exercise-name="${ex[environment]}" data-muscle-group="${ex.name}" title="Get AI Alternative">✨</button>
+                    <div class="border-b border-gray-100 py-3">
+                        <div class="font-semibold text-gray-700">${ex.name}</div>
+                        <div class="flex justify-between items-center mt-1">
+                            <div>
+                                <p id="exercise-name-${ex.id}" class="font-semibold">
+                                    <a id="exercise-link-${ex.id}" href="${videoLink}" target="_blank" title="Watch demonstration" class="text-indigo-600 hover:text-indigo-800">
+                                        ${exerciseName} <span class="text-xs">▶️</span>
+                                    </a>
+                                </p>
+                                <p class="text-sm text-gray-500">${ex.sets} sets x ${ex.reps} reps</p>
+                            </div>
+                            <div>
+                                <button class="gemini-btn px-3 py-1 rounded-md text-xs" data-exercise-id="${ex.id}" data-exercise-name="${exerciseName}" data-muscle-group="${ex.name}" title="Get AI Alternative">Alternative</button>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -321,6 +411,7 @@
             workoutContent.innerHTML = html;
             addExerciseButtonListeners();
             updateChart();
+            updateSlidersFromWorkout();
         }
 
         function addExerciseButtonListeners() {
@@ -347,73 +438,118 @@
         }
 
         function setupEventListeners() {
-            btn2Day.addEventListener('click', () => {
-                currentPlan = '2-day';
-                updateScheduleDisplay();
-            });
-
-            btn3Day.addEventListener('click', () => {
-                currentPlan = '3-day';
-                updateScheduleDisplay();
-            });
-
-            Object.keys(tabs).forEach(id => {
-                tabs[id].addEventListener('click', () => switchTab(id));
-            });
-            
+            btn2Day.addEventListener('click', () => { currentPlan = '2-day'; updateScheduleDisplay(); });
+            btn3Day.addEventListener('click', () => { currentPlan = '3-day'; updateScheduleDisplay(); });
+            Object.keys(tabs).forEach(id => { tabs[id].addEventListener('click', () => switchTab(id)); });
             envToggle.addEventListener('change', (e) => {
                 isHome = e.target.checked;
-                const dot = document.querySelector('.dot');
-                if (isHome) {
-                    dot.style.transform = 'translateX(100%)';
-                } else {
-                    dot.style.transform = 'translateX(0)';
-                }
+                document.querySelector('.dot').style.transform = isHome ? 'translateX(100%)' : 'translateX(0)';
                 renderWorkout();
             });
+            
+            generatePlanBtn.addEventListener('click', generateCustomWorkout);
+            resetPlanBtn.addEventListener('click', () => {
+                workoutData = JSON.parse(JSON.stringify(originalWorkoutData));
+                renderWorkout();
+            });
+
+            let activeSlider = null;
+            Object.keys(sliders).forEach(key => {
+                sliders[key].addEventListener('mousedown', () => activeSlider = key);
+                sliders[key].addEventListener('touchstart', () => activeSlider = key);
+                sliders[key].addEventListener('input', handleSliderInput);
+            });
+            document.addEventListener('mouseup', () => activeSlider = null);
+            document.addEventListener('touchend', () => activeSlider = null);
+
+            function handleSliderInput() {
+                if (!activeSlider) return;
+
+                const total = 100;
+                const slidersArray = Object.values(sliders);
+                const activeIndex = Object.keys(sliders).indexOf(activeSlider);
+                
+                let currentValue = parseInt(sliders[activeSlider].value);
+                let sumOfOthers = 0;
+                slidersArray.forEach((s, i) => {
+                    if (i !== activeIndex) sumOfOthers += parseInt(s.value);
+                });
+
+                if (sumOfOthers + currentValue > total) {
+                    let diff = (sumOfOthers + currentValue) - total;
+                    let otherSliders = slidersArray.filter((s, i) => i !== activeIndex);
+                    
+                    otherSliders.forEach(slider => {
+                        let sliderValue = parseInt(slider.value);
+                        let reduction = Math.round(diff * (sliderValue / sumOfOthers));
+                        slider.value = Math.max(0, sliderValue - reduction);
+                    });
+
+                    let newSum = slidersArray.reduce((acc, s) => acc + parseInt(s.value), 0);
+                    if (newSum !== total) {
+                         sliders[activeSlider].value = currentValue - (newSum - total);
+                    }
+                }
+                updateSliderValuesAndChart();
+            }
+        }
+        
+        function updateSliderValuesAndChart() {
+            const lowerVal = parseInt(sliders.lower.value);
+            const upperVal = parseInt(sliders.upper.value);
+            const coreVal = 100 - lowerVal - upperVal;
+            
+            sliders.core.value = coreVal;
+
+            values.lower.textContent = `${lowerVal}%`;
+            values.upper.textContent = `${upperVal}%`;
+            values.core.textContent = `${coreVal}%`;
+
+            if (muscleChart) {
+                muscleChart.data.datasets[0].data = [lowerVal, upperVal, coreVal];
+                muscleChart.update();
+            }
+        }
+
+        function updateSlidersFromWorkout() {
+            const focus = workoutData[currentWorkout].muscleFocus;
+            sliders.lower.value = focus[0];
+            sliders.upper.value = focus[1];
+            sliders.core.value = focus[2];
+            updateSliderValuesAndChart();
         }
         
         function createChart() {
             const ctx = document.getElementById('muscle-chart').getContext('2d');
             muscleChart = new Chart(ctx, {
-                type: 'doughnut',
+                type: 'bar',
                 data: {
                     labels: ['Lower Body', 'Upper Body', 'Core & Cardio'],
                     datasets: [{
-                        data: workoutData[currentWorkout].muscleFocus,
-                        backgroundColor: [
-                            'rgba(79, 70, 229, 0.7)',
-                            'rgba(99, 102, 241, 0.7)',
-                            'rgba(165, 180, 252, 0.7)'
-                        ],
-                        borderColor: [
-                            '#4f46e5',
-                            '#6366f1',
-                            '#a5b4fc'
-                        ],
+                        label: 'Muscle Focus',
+                        data: [],
+                        backgroundColor: ['#4f46e5', '#14b8a6', '#f97316'],
+                        borderColor: ['#4f46e5', '#14b8a6', '#f97316'],
                         borderWidth: 1
                     }]
                 },
                 options: {
+                    indexAxis: 'y',
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
+                    plugins: { 
+                        legend: { 
+                            display: false 
+                        }
+                    },
+                    scales: {
+                        x: {
+                            max: 100,
+                            ticks: { display: false },
+                            grid: { display: false }
                         },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    let label = context.label || '';
-                                    if (label) {
-                                        label += ': ';
-                                    }
-                                    if (context.parsed !== null) {
-                                        label += context.parsed + '%';
-                                    }
-                                    return label;
-                                }
-                            }
+                        y: {
+                            grid: { display: false }
                         }
                     }
                 }
@@ -422,7 +558,8 @@
 
         function updateChart() {
             if (!muscleChart) return;
-            muscleChart.data.datasets[0].data = workoutData[currentWorkout].muscleFocus;
+            const focus = workoutData[currentWorkout].muscleFocus;
+            muscleChart.data.datasets[0].data = focus;
             muscleChart.update();
         }
 
